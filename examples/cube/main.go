@@ -16,7 +16,7 @@ func main() {
 	defer f.Close()
 
 	// Create Mesh, generate Cube and Encode as OBJ
-	mesh := gomesh.Mesh{}
+	mesh := new(gomesh.Mesh)
 	mesh.AddCube(1.0, 1.0, 1.0)
 	mesh.EncodeOBJ(f)
 }

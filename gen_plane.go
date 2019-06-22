@@ -2,7 +2,7 @@ package gomesh
 
 // AddPlane generates a plane with the size of {w,h} with offset z. The function panics if the axis parameter is invalid.
 func (mesh *Mesh) AddPlane(w, h, offset float64, axis int) {
-	vertices := make([]int, 0)
+	var vertices []int
 
 	// Add vertices
 	for x := -w / 2; x <= w/2; x += w {

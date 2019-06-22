@@ -5,6 +5,12 @@ import "errors"
 // ErrVertexNotFound is returned when the FindVertex() function does not find the vertex
 var ErrVertexNotFound = errors.New("Vertex not found")
 
+// ErrUnsupportedOBJ is returned when DecodeOBJ can not parse the data
+var ErrUnsupportedOBJ = errors.New("Unsupported OBJ Format")
+
+// ErrInvalidMesh is returned when a decoding function can not make a valid mesh from the data
+var ErrInvalidMesh = errors.New("Invalid Mesh data")
+
 // Axis definitions
 const (
 	X = iota

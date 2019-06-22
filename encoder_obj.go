@@ -24,7 +24,7 @@ func (mesh Mesh) EncodeOBJ(writer io.Writer) error {
 	for _, face := range mesh.Faces {
 		fmt.Fprint(writer, "f")
 		for _, vertex := range face.Vertices {
-			fmt.Fprintf(writer, " %d", vertex+1)
+			fmt.Fprintf(writer, " %d", vertex+1) // OBJ Vertex counting starts with 1
 		}
 		fmt.Fprintln(writer)
 	}
