@@ -1,3 +1,4 @@
+// Package gomesh provides functions for basic handling of 3D mesh data in Go. The mesh data can also be read from and written to OBJ files.
 package gomesh
 
 import "errors"
