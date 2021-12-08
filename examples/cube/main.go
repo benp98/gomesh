@@ -11,7 +11,7 @@ func main() {
 	// Create new file
 	f, err := os.Create("cube.obj")
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 	defer f.Close()
 
