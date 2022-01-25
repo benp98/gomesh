@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/benp98/gomesh"
+	"github.com/benp98/gomesh/obj"
 )
 
 func main() {
@@ -17,27 +17,31 @@ func main() {
 	defer file.Close()
 
 	// Decode the mesh data
-	mesh, err := gomesh.DecodeOBJ(file)
+	scene, err := obj.Decode(file)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Print all vertices
-	fmt.Println("Vertices:")
-	for i, v := range mesh.Vertices {
-		fmt.Printf("\tVertex: %4d %8.2f %8.2f %8.2f\n", i, v.X, v.Y, v.Z)
-	}
-	fmt.Println()
+	for _, mesh := range scene {
+		fmt.Printf("Mesh %s:\n", mesh.Name)
 
-	// Print all faces
-	fmt.Println("Faces:")
-	for _, f := range mesh.Faces {
-		fmt.Println("\tFace:")
+		// Print all vertices
+		fmt.Println("Vertices:")
+		for i, v := range mesh.Vertices {
+			fmt.Printf("\tVertex: %4d %8.2f %8.2f %8.2f\n", i, v.Position[0], v.Position[1], v.Position[2])
+		}
+		fmt.Println()
 
-		// Print vertex infos
-		for _, vID := range f.Vertices {
-			v := mesh.Vertices[vID]
-			fmt.Printf("\t\tVertex: %8.2f %8.2f %8.2f\n", v.X, v.Y, v.Z)
+		// Print all faces
+		fmt.Println("Faces:")
+		for _, f := range mesh.Faces {
+			fmt.Println("\tFace:")
+
+			// Print vertex infos
+			for _, vID := range f.VertexIDs {
+				v := mesh.Vertices[vID]
+				fmt.Printf("\t\tVertex: %8.2f %8.2f %8.2f\n", v.Position[0], v.Position[1], v.Position[2])
+			}
 		}
 	}
 }

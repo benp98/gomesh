@@ -6,38 +6,35 @@ import "errors"
 // ErrVertexNotFound is returned when the FindVertex() function does not find the vertex
 var ErrVertexNotFound = errors.New("vertex not found")
 
-// ErrInvalidMesh is returned when a decoding function can not make a valid mesh from the data
-var ErrInvalidMesh = errors.New("invalid Mesh data")
+// ErrInvalidScene is returned when a decoding function can not make a valid scene from the source data
+var ErrInvalidScene = errors.New("invalid Scene data")
 
-// Axis definitions
-const (
-	X = iota
-	Y
-	Z
-)
+// Special smoothing group which disables smoothing
+const NoSmoothing = 0
 
-// Point is a location definition in 3D space
-type Point struct {
-	X float64
-	Y float64
-	Z float64
+// Vertex holds the position and normal information of a single vertex
+type Vertex struct {
+	Position Vector3D
+	Normal   Vector3D
 }
 
 // Face contains a list of points (as a slice of mesh vertex ids) which describe the face's 3D structure
 type Face struct {
-	Vertices []int
+	SmoothingGroup int
+	VertexIDs      []int
 }
 
 // Mesh is composed of one or multiple faces
 type Mesh struct {
-	Vertices []Point
-	Faces    []Face
+	Name     string
+	Vertices []*Vertex
+	Faces    []*Face
 }
 
 // FindVertex searches for a vertex at the given position
-func (mesh Mesh) FindVertex(x, y, z float64) (int, error) {
+func (mesh Mesh) FindVertex(other *Vertex, tolerance float64) (int, error) {
 	for k, v := range mesh.Vertices {
-		if v.X == x && v.Y == y && v.Z == z {
+		if v.Position.AlmostEqual(other.Position, tolerance) && v.Normal.AlmostEqual(other.Normal, tolerance) {
 			return k, nil
 		}
 	}
@@ -45,23 +42,21 @@ func (mesh Mesh) FindVertex(x, y, z float64) (int, error) {
 	return 0, ErrVertexNotFound
 }
 
-// AddVertex creates a vertex at the given position if there is not already a vertex. Returns the vertex id
-func (mesh *Mesh) AddVertex(x, y, z float64) int {
-	id, err := mesh.FindVertex(x, y, z)
-	if errors.Is(err, ErrVertexNotFound) {
-		id = len(mesh.Vertices)
-		mesh.Vertices = append(mesh.Vertices, Point{x, y, z})
-	}
+// AddVertex adds a vertex to the list of vertices and returns the index
+func (mesh *Mesh) AddVertex(v *Vertex) int {
+	id := len(mesh.Vertices)
+
+	mesh.Vertices = append(mesh.Vertices, v)
 
 	return id
 }
 
-// Validate validates the Mesh data
+// Validate performs basic validation of the Mesh data
 func (mesh Mesh) Validate() bool {
 	// Iterate over all faces
 	for _, f := range mesh.Faces {
 		// Check if all vertex ids are in bounds
-		for _, v := range f.Vertices {
+		for _, v := range f.VertexIDs {
 			if v > len(mesh.Vertices)-1 || v < 0 {
 				// Vertex ids are not in bounds
 				return false
@@ -73,36 +68,25 @@ func (mesh Mesh) Validate() bool {
 	return true
 }
 
-// AddPlane generates a plane with the size of {w,h} with offset z. The function panics if the axis parameter is invalid.
-func (mesh *Mesh) AddPlane(w, h, offset float64, axis int) {
-	var vertices []int
+// Scene is a collection of meshes
+type Scene []*Mesh
 
-	// Add vertices
-	for x := -w / 2; x <= w/2; x += w {
-		for y := -h / 2; y <= h/2; y += h {
-			switch axis {
-			case X:
-				vertices = append(vertices, mesh.AddVertex(offset, y, x))
-			case Y:
-				vertices = append(vertices, mesh.AddVertex(x, offset, y))
-			case Z:
-				vertices = append(vertices, mesh.AddVertex(x, y, offset))
-			default:
-				panic("Invalid axis specification")
-			}
+// Validate performs basic validation of the Scene data and its meshes
+func (scene Scene) Validate() bool {
+	meshNames := make(map[string]bool)
+
+	for _, mesh := range scene {
+		// There must be only one mesh with a given name
+		if _, exists := meshNames[mesh.Name]; exists {
+			return false
+		}
+		meshNames[mesh.Name] = true
+
+		if !mesh.Validate() {
+			return false
 		}
 	}
 
-	// Make faces
-	mesh.Faces = append(mesh.Faces, Face{[]int{vertices[0], vertices[1], vertices[3], vertices[2]}})
-}
-
-// AddCube generates a cube with the size of {sx, sy, sz}
-func (mesh *Mesh) AddCube(sx, sy, sz float64) {
-	mesh.AddPlane(sx, sy, sz/2, Z)
-	mesh.AddPlane(sx, sy, -sz/2, Z)
-	mesh.AddPlane(sz, sy, sx/2, X)
-	mesh.AddPlane(sz, sy, -sx/2, X)
-	mesh.AddPlane(sx, sz, sy/2, Y)
-	mesh.AddPlane(sx, sz, -sy/2, Y)
+	// Everything ok
+	return true
 }
